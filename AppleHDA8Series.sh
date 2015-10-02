@@ -137,7 +137,7 @@ gScriptVersion=3.1
 #
 # Setting the debug mode (default off).
 #
-let DEBUG=1
+let DEBUG=0
 
 #
 # Get user id
@@ -200,6 +200,7 @@ gConfigData="IUccECFHHUAhRx4RIUcfASFXHCAhVx0QIVceASFXHwEhZxzwIWcdACFnHgAhZx9AIXc
 # Initialise variable with the Extensions directory.
 #
 gExtensionsDirectory="/System/Library/Extensions"
+gExtensionsDirectoryCapitan="/Library/Extensions"
 
 #
 # List with supported Realtek codecs.
@@ -225,11 +226,7 @@ gDownloadLink="https://raw.githubusercontent.com/toleda/audio_ALC892/master/892.
 gProductVersion="$(sw_vers -productVersion)"
 gIsCapitan=""
 #Capitan Workarround???
-<<<<<<< HEAD
 gCapitanCommandString="#\x3d\x83\x19\xd4\x11,\x83\xf8\x00\x90\x90"
-=======
-gCapitanCommandString="#\x83\x19\xd4\x11,\x00\x00\x00\x00"
->>>>>>> parent of 1a7cff8... Change AppleHDA patch data
 
 #
 # These will be initialised later on, when required.
@@ -1148,7 +1145,7 @@ function _initConfigData()
 
                   if [[ $layoutID -eq $gLayoutID ]];
                     then
-                      _DEBUG_PRINT "Target LayoutID found ..."
+                      _DEBUG_PRINT "Target LayoutID found: ${layoutID} ..."
                       _DEBUG_PRINT "Getting ConfigData ..."
                       #
                       # Get the ConfigData and store it in XML format (otherwise we end up with a trailing 0a)
@@ -1204,13 +1201,15 @@ function _initConfigData()
             #
             # No. Download the archive from Toleda's Github repository :-)
             #
-            _PRINT_ERROR "ConfigData NOT found!\nDownloading ${gDownloadLink} ...\n"
-            sudo curl -o "/tmp/ALC${gKextID}.zip" $gDownloadLink
+            if [[ ! -e "/tmp/ALC${gKextID}.zip" ]]; then
+              _PRINT_ERROR "ConfigData NOT found!\nDownloading ${gDownloadLink} ...\n"
+              sudo curl -o "/tmp/ALC${gKextID}.zip" $gDownloadLink
+              _LOG_PRINT ""
+              _DEBUG_PRINT "Download Done!\n"
+            fi
             #
             # Unzip archive.
             #
-            _LOG_PRINT ""
-            _DEBUG_PRINT "Download Done!\n"
             _LOG_PRINT "Unzipping "
             unzip -u "/tmp/ALC${gKextID}.zip" -d "/tmp/"
           fi
@@ -1317,10 +1316,10 @@ function _initConfigData()
 
 function _creatInfoPlist()
 {
-  echo '<?xml version="1.0" encoding="UTF-8"?>'                                                                       > $gInfoPlist
-  echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'      >> $gInfoPlist
-  echo '<plist version="1.0">'                                                                                       >> $gInfoPlist
-  echo '<dict>'                                                                                                      >> $gInfoPlist
+  echo '<?xml version="1.0" encoding="UTF-8"?>'                                                                     > $gInfoPlist
+  echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'    >> $gInfoPlist
+  echo '<plist version="1.0">'                                                                                     >> $gInfoPlist
+  echo '<dict>'                                                                                                    >> $gInfoPlist
   echo '  <key>BuildMachineOSBuild</key>'                                                                          >> $gInfoPlist
   echo '  <string>13C32</string>'                                                                                  >> $gInfoPlist
   echo '  <key>CFBundleDevelopmentRegion</key>'                                                                    >> $gInfoPlist
@@ -1343,35 +1342,35 @@ function _creatInfoPlist()
   echo '  <string>'$gScriptVersion'.0</string>'                                                                    >> $gInfoPlist
   echo '  <key>IOKitPersonalities</key>'                                                                           >> $gInfoPlist
   echo '  <dict>'                                                                                                  >> $gInfoPlist
-  echo '    <key>HDA Hardware Config Resource</key>'                                                             >> $gInfoPlist
-  echo '    <dict>'                                                                                              >> $gInfoPlist
-  echo '      <key>CFBundleIdentifier</key>'                                                                   >> $gInfoPlist
-  echo '      <string>com.apple.driver.AppleHDAHardwareConfigDriver</string>'                                  >> $gInfoPlist
-  echo '      <key>HDAConfigDefault</key>'                                                                     >> $gInfoPlist
-  echo '      <array>'                                                                                         >> $gInfoPlist
-  echo '        <dict>'                                                                                      >> $gInfoPlist
-  echo '          <key>CodecID</key>'                                                                      >> $gInfoPlist
-  echo '          <integer>'$gCodecID'</integer>'                                                          >> $gInfoPlist
-  echo '          <key>ConfigData</key>'                                                                   >> $gInfoPlist
-  echo '          <data>'$gConfigData'</data>'                                                             >> $gInfoPlist
-  echo '          <key>FuncGroup</key>'                                                                    >> $gInfoPlist
-  echo '          <integer>1</integer>'                                                                    >> $gInfoPlist
-  echo '          <key>LayoutID</key>'                                                                     >> $gInfoPlist
-  echo '          <integer>'$gLayoutID'</integer>'                                                         >> $gInfoPlist
-  echo '        </dict>'                                                                                     >> $gInfoPlist
-  echo '      </array>'                                                                                        >> $gInfoPlist
-  echo '      <key>IOClass</key>'                                                                              >> $gInfoPlist
-  echo '      <string>AppleHDAHardwareConfigDriver</string>'                                                   >> $gInfoPlist
-  echo '      <key>IOMatchCategory</key>'                                                                      >> $gInfoPlist
-  echo '      <string>AppleHDAHardwareConfigDriver</string>'                                                   >> $gInfoPlist
-  echo '      <key>IOProviderClass</key>'                                                                      >> $gInfoPlist
-  echo '      <string>AppleHDAHardwareConfigDriverLoader</string>'                                             >> $gInfoPlist
-  echo '    </dict>'                                                                                             >> $gInfoPlist
+  echo '    <key>HDA Hardware Config Resource</key>'                                                               >> $gInfoPlist
+  echo '    <dict>'                                                                                                >> $gInfoPlist
+  echo '      <key>CFBundleIdentifier</key>'                                                                       >> $gInfoPlist
+  echo '      <string>com.apple.driver.AppleHDAHardwareConfigDriver</string>'                                      >> $gInfoPlist
+  echo '      <key>HDAConfigDefault</key>'                                                                         >> $gInfoPlist
+  echo '      <array>'                                                                                             >> $gInfoPlist
+  echo '        <dict>'                                                                                            >> $gInfoPlist
+  echo '          <key>CodecID</key>'                                                                              >> $gInfoPlist
+  echo '          <integer>'$gCodecID'</integer>'                                                                  >> $gInfoPlist
+  echo '          <key>ConfigData</key>'                                                                           >> $gInfoPlist
+  echo '          <data>'$gConfigData'</data>'                                                                     >> $gInfoPlist
+  echo '          <key>FuncGroup</key>'                                                                            >> $gInfoPlist
+  echo '          <integer>1</integer>'                                                                            >> $gInfoPlist
+  echo '          <key>LayoutID</key>'                                                                             >> $gInfoPlist
+  echo '          <integer>'$gLayoutID'</integer>'                                                                 >> $gInfoPlist
+  echo '        </dict>'                                                                                           >> $gInfoPlist
+  echo '      </array>'                                                                                            >> $gInfoPlist
+  echo '      <key>IOClass</key>'                                                                                  >> $gInfoPlist
+  echo '      <string>AppleHDAHardwareConfigDriver</string>'                                                       >> $gInfoPlist
+  echo '      <key>IOMatchCategory</key>'                                                                          >> $gInfoPlist
+  echo '      <string>AppleHDAHardwareConfigDriver</string>'                                                       >> $gInfoPlist
+  echo '      <key>IOProviderClass</key>'                                                                          >> $gInfoPlist
+  echo '      <string>AppleHDAHardwareConfigDriverLoader</string>'                                                 >> $gInfoPlist
+  echo '    </dict>'                                                                                               >> $gInfoPlist
   echo '  </dict>'                                                                                                 >> $gInfoPlist
   echo '  <key>OSBundleRequired</key>'                                                                             >> $gInfoPlist
   echo '  <string>Root</string>'                                                                                   >> $gInfoPlist
-  echo '</dict>'                                                                                                     >> $gInfoPlist
-  echo '</plist>'                                                                                                    >> $gInfoPlist
+  echo '</dict>'                                                                                                   >> $gInfoPlist
+  echo '</plist>'                                                                                                  >> $gInfoPlist
 }
 
 
@@ -1548,7 +1547,7 @@ function main()
   #
   # Copy the Platforms file from the source directory.
   #
-  if [[ -e "${gSourceDirectory}/layout${gLayoutID}.xml.zlib" ]];
+  if [[ -e "${gSourceDirectory}/Platforms.xml.zlib" ]];
     then
       cp "${gSourceDirectory}/Platforms.xml.zlib" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
     else
@@ -1762,13 +1761,19 @@ function main()
   _DEBUG_PRINT "Fixing file ownership ...\n"
   chown -R root:wheel "${gTargetDirectory}/${gKextName}.kext"
 
+  if [[ $gIsCapitan ]];
+    then
+      _DEBUG_PRINT "Extensions Dir >= 10.11 = ${gExtensionsDirectoryCapitan} ...\n"
+      gExtensionsDirectory="${gExtensionsDirectoryCapitan}"
+  fi
+
   if [[ "${gTargetDirectory}" != "${gExtensionsDirectory}" ]];
     then
       _DEBUG_PRINT "Checking kext with kextutil ...\n"
       #
       # Check for Yosemite (different kernel path).
       #
-      if [[ $gProductVersion =~ "10.10" ]];
+      if [[ $gProductVersion =~ "10.10" || $gIsCapitan ]];
         then
           #
           # -q = Quiet mode; print no informational or error messages.
