@@ -147,7 +147,7 @@ let gID=$(id -u)
 #
 # Change this so that it points to the directory with the .zlib files.
 #
-gSourceDirectory="/Users/$(whoami)/Desktop"
+gSourceDirectory="/tmp"
 
 #
 # Get the current working directory.
@@ -173,7 +173,7 @@ gKextID=892
 #
 # Initialise variable with Info.plist filename.
 #
-gInfoPlist="${gTargetDirectory}/${gKextName}.kext/Contents/Info.plist"
+gInfoPlist=""
 
 #
 # This is the default 'CodecID'.
@@ -224,8 +224,9 @@ gDownloadLink="https://raw.githubusercontent.com/toleda/audio_ALC892/master/892.
 # The version info of the running system i.e. '10.9.2'
 #
 gProductVersion="$(sw_vers -productVersion)"
-gIsCapitan=""
+
 #Capitan Workarround???
+gIsCapitan=""
 gCapitanCommandString="#\x3d\x83\x19\xd4\x11,\x83\xf8\x00\x90\x90"
 
 #
@@ -297,7 +298,7 @@ function _LOG_PRINT()
 {
   #local str=$(echo $1 | sed -e 's/-/\\-/' -e 's/^[ \t\n]*//' -e 's/[ \t\n]*$//')
   local str=$(echo $1 | sed -e 's/[ \t\n]*$//')
-  printf "%s\n" "$str"
+  printf "%s\n" "${str}"
 }
 
 
@@ -308,7 +309,7 @@ function _LOG_PRINT()
 function _DEBUG_PRINT()
 {
   if [[ $DEBUG -eq 1 ]]; then
-    _LOG_PRINT "$1"
+    _LOG_PRINT "${1}"
   fi
 }
 
@@ -321,9 +322,9 @@ function _PRINT_NOTE()
 {
   if [[ $gExtraStyling -eq 1 ]];
     then
-      printf "${STYLE_BOLD}Note:${STYLE_RESET} $1"
+      printf "${STYLE_BOLD}Note:${STYLE_RESET} ${1}"
     else
-      printf "Note: $1"
+      printf "Note: ${1}"
   fi
 }
 
@@ -336,9 +337,9 @@ function _PRINT_WARNING()
 {
   if [[ $gExtraStyling -eq 1 ]];
     then
-      printf "${STYLE_BOLD}Warning:${STYLE_RESET} $1"
+      printf "${STYLE_BOLD}Warning:${STYLE_RESET} ${1}"
     else
-      printf "Warning: $1"
+      printf "Warning: ${1}"
   fi
 }
 
@@ -391,7 +392,7 @@ function _selectLayoutID()
   echo ''
 
   read -p "Please choose the desired layout-id (1/${index})? " selection
-  case "$selection" in
+  case "${selection}" in
     [1-${index}])
       _LOG_PRINT "Now using layout-id: ${selection}"
       let gLayoutID=$selection
@@ -410,7 +411,7 @@ function _selectLayoutID()
 
 function _checkHDEFProperties()
 {
-  if [[ ! -e /tmp/HDEF.txt ]];
+  if [[ ! -e "${gSourceDirectory}/HDEF.txt" ]];
     then
       #
       # -r = Show subtrees rooted by objects that match the specified criteria (-p and -k)
@@ -418,17 +419,17 @@ function _checkHDEFProperties()
       # -p = Traverse the registry plane 'IODeviceTree'
       # -n = Show properties if there is an object with the name 'HDEF'
       #
-      ioreg -rw 0 -p IODeviceTree -n HDEF > /tmp/HDEF.txt
+      ioreg -rw 0 -p IODeviceTree -n HDEF > "${gSourceDirectory}/HDEF.txt"
   fi
 
-  if [[ $(cat /tmp/HDEF.txt | grep -o "MaximumBootBeepVolume") == "MaximumBootBeepVolume" ]];
+  if [[ $(cat "${gSourceDirectory}/HDEF.txt" | grep -o "MaximumBootBeepVolume") == "MaximumBootBeepVolume" ]];
     then
       _DEBUG_PRINT "MaximumBootBeepVolume property found\n"
     else
       _PRINT_WARNING "'MaximumBootBeepVolume' property NOT found (will show a Sound assertion in: system.log)\n"
   fi
 
-  if [[ $(cat /tmp/HDEF.txt | grep -o "PinConfigurations") == "PinConfigurations" ]];
+  if [[ $(cat "${gSourceDirectory}/HDEF.txt" | grep -o "PinConfigurations") == "PinConfigurations" ]];
     then
       _DEBUG_PRINT "PinConfigurations property found\n"
     else
@@ -448,11 +449,11 @@ function _checkPatchPatterns()
   local binary=$3
   arr=()
 
-  IFS='#' read -a commandStringArray <<< "$commandString"
+  IFS='#' read -a commandStringArray <<< "${commandString}"
   IFS=$ifs
 
   local targetBinaryName=$(echo $targetBinary | sed 's/.*\/MacOS\///')
-  _DEBUG_PRINT "targetBinaryName: $targetBinaryName\n"
+  _DEBUG_PRINT "targetBinaryName: ${targetBinaryName}\n"
 
   for commandString in "${commandStringArray[@]}"
   do
@@ -474,7 +475,7 @@ function _checkPatchPatterns()
         #
         # Yes, so do we have a target binary (should be there)?
         #
-        if [[ -e "$targetBinary" ]];
+        if [[ -e "${targetBinary}" ]];
           then
             #local targetBinaryName=$(echo $targetBinary | sed 's/.*\/MacOS\///')
             #_DEBUG_PRINT "targetBinaryName: $targetBinaryName\n"
@@ -553,14 +554,14 @@ function _patchAppleHDAController()
   #
   # Cleanups.
   #
-  if [[ -f /tmp/AppleHDAController ]];
+  if [[ -f "${gSourceDirectory}/AppleHDAController" ]];
     then
-      rm /tmp/AppleHDAController
+      rm "${gSourceDirectory}/AppleHDAController"
   fi
 
-  if [[ -f /tmp/AppleHDAController.txt ]];
+  if [[ -f "${gSourceDirectory}/AppleHDAController.txt" ]];
     then
-      rm /tmp/AppleHDAController.txt
+      rm "${gSourceDirectory}/AppleHDAController.txt"
   fi
 
   #
@@ -588,7 +589,7 @@ function _patchAppleHDAController()
       while read -r line; do
         /usr/bin/perl -pi -e "s|${line}|${line:0:5}c${line:6:16}|" $gHexDumpFile
         _DEBUG_PRINT "s|${line}|${line:0:5}c${line:6:16}|"
-      done <<< "$gMatchData"
+      done <<< "${gMatchData}"
     else
       _PRINT_WARNING "no match found for: __ZN18AppleHDAController17gfxMatchedHandlerEPvP9IOServiceP10IONotifier\n"
   fi
@@ -613,7 +614,7 @@ function _patchAppleHDAController()
       while read -r line; do
         /usr/bin/perl -pi -e "s|${line}|${line:0:5}c${line:6:24}|" $gHexDumpFile
         _DEBUG_PRINT "s|${line}|${line:0:5}c${line:6:24}|"
-      done <<< "$gMatchData"
+      done <<< "${gMatchData}"
     else
       _DEBUG_PRINT "no match found for: __ZN18AppleHDAController19edidIsValidForAudioEP6OSDatai (normal for OS X 10.8)\n"
   fi
@@ -624,7 +625,7 @@ function _patchAppleHDAController()
   #
   gMatchData=$(egrep -o '3d0c0a0000[0-9a-f]{28}3d0c0c00[0-9a-f]{14}' "${gHexDumpFile}")
 
-  if [[ gIsCapitan ]]; then
+  if [[ $gIsCapitan ]]; then
     gMatchData=$(egrep -o '3d0c0a0000[0-9a-f]{12}3d0c0c00[0-9a-f]{14}' "${gHexDumpFile}")
   fi
 
@@ -646,7 +647,7 @@ function _patchAppleHDAController()
       #
       let jmpSource=(0x${gMatchData:12:2})
 
-      if [[ gIsCapitan ]]; then
+      if [[ $gIsCapitan ]]; then
         jmpSource=(0x${gMatchData:14:2})
       fi
 
@@ -655,7 +656,7 @@ function _patchAppleHDAController()
       #
       let jmpTargetLen=19
 
-      if [[ gIsCapitan ]]; then
+      if [[ $gIsCapitan ]]; then
         jmpTargetLen=11
       fi
 
@@ -669,13 +670,13 @@ function _patchAppleHDAController()
 
       local nextjmpTarget="${gMatchData:48:2}"
 
-      if [[ gIsCapitan ]]; then
+      if [[ $gIsCapitan ]]; then
         nextjmpTarget="${gMatchData:32:2}"
       fi
 
       if [ $nextjmpTarget == "0f" ];
         then
-          if [[ gIsCapitan ]]; then
+          if [[ $gIsCapitan ]]; then
             /usr/bin/perl -pi -e "s|${gMatchData}|${gMatchData:0:36}${newTarget}${gMatchData:38:6}|" $gHexDumpFile
             #/usr/bin/perl -pi -e "s|${gMatchData}|${gMatchData:0:36}${newTarget}000000|" $gHexDumpFile
             _DEBUG_PRINT "s|${gMatchData}|${gMatchData:0:36}${newTarget}${gMatchData:38:6}|"
@@ -692,7 +693,7 @@ function _patchAppleHDAController()
   #
   # Convert hex data to binary file
   #
-  /usr/bin/xxd -r -p $gHexDumpFile /tmp/AppleHDAController
+  /usr/bin/xxd -r -p $gHexDumpFile "${gSourceDirectory}/AppleHDAController"
 
   if [[ $DEBUG -eq 1 ]];
     then
@@ -700,7 +701,7 @@ function _patchAppleHDAController()
         # Show changed bytes
         #
         printf "\nPatched bytes:\n-------------------------\n"
-        /usr/bin/cmp -l "${appleHDAController}" /tmp/AppleHDAController
+        /usr/bin/cmp -l "${appleHDAController}" "${gSourceDirectory}/AppleHDAController"
         _LOG_PRINT  "-------------------------"
   fi
 }
@@ -749,7 +750,7 @@ function _initBinPatchPattern()
                   _LOG_PRINT "              - Use a search pattern that matches the AppleHDAController binary.\n"
                   _LOG_PRINT "              - Use your search pattern also as replace pattern.\n"
                   read -p "Do you want to continue or abort (c/a)? " choice
-                  case "$choice" in
+                  case "${choice}" in
                     a|A) _ABORT
                          ;;
 
@@ -802,7 +803,7 @@ function _initBinPatchPattern()
                         _LOG_PRINT "              - Use your search pattern also as replace pattern.\n"
                         _LOG_PRINT '                Example: -b AppleHDA:\\x85\\x08\\xec\\x10,\\x85\\x08\\xec\\x10\n\n'
                         read -p "Do you want to continue or abort (c/a)? " choice
-                        case "$choice" in
+                        case "${choice}" in
                           a|A) _ABORT
                                ;;
 
@@ -856,7 +857,7 @@ function _initBinPatchPattern()
                     ;;
             esac
 
-            if [[ gAppleHDAPatchPattern != "undetermined" && gIsCapitan ]]; then
+            if [[ gAppleHDAPatchPattern != "undetermined" && $gIsCapitan ]]; then
               _LOG_PRINT "Re-init AppleHDA patch: for >= 10.11 ...\n"
               commandString="AppleHDA:${gAppleHDAPatchPattern}${gCapitanCommandString}"
               _initBinPatchPattern $commandString
@@ -904,18 +905,18 @@ function _initLayoutID()
       # -p = Traverse the registry plane 'IODeviceTree'
       # -n = Show properties if there is an object with the name 'HDEF'
       #
-      ioreg -rw 0 -p IODeviceTree -n HDEF > /tmp/HDEF.txt
+      ioreg -rw 0 -p IODeviceTree -n HDEF > "${gSourceDirectory}/HDEF.txt"
       #
       # Check for Device (HDEF) in the ioregHDEFData.
       #
-      if [[ $(cat /tmp/HDEF.txt | grep -o "HDEF@1B") == "HDEF@1B" ]];
+      if [[ $(cat "${gSourceDirectory}/HDEF.txt" | grep -o "HDEF@1B") == "HDEF@1B" ]];
         then
           _DEBUG_PRINT "ACPI Device (HDEF) {} found\n"
           #
           # Get layout-id from ioreg data.
           #
-          local layoutID=$(cat /tmp/HDEF.txt | grep layout-id | sed -e 's/.*<//' -e 's/>//')
-          _DEBUG_PRINT "layoutID: $layoutID\n"
+          local layoutID=$(cat "${gSourceDirectory}/HDEF.txt" | grep layout-id | sed -e 's/.*<//' -e 's/>//')
+          _DEBUG_PRINT "layoutID: ${layoutID}\n"
           #
           # Check value of layout-id (might still be empty).
           #
@@ -935,8 +936,8 @@ function _initLayoutID()
               #
               question="Do you want to use [${layoutID}] as the layout-id (y/n)? "
 
-              read -p "$question" choice
-              case "$choice" in
+              read -p "${question}" choice
+              case "${choice}" in
                 y|Y) gLayoutID=$layoutID
                      ;;
 
@@ -1032,7 +1033,7 @@ function _initCodecID()
       #
       # Show the text with the matching ALC selected.
       #
-      _LOG_PRINT "Please choose the desired codec for the hardware: $selection"
+      _LOG_PRINT "Please choose the desired codec for the hardware: ${selection}"
     else
       #
       # Let the user make a selection.
@@ -1040,7 +1041,7 @@ function _initCodecID()
       read -p "Please choose the desired codec for the hardware: " selection
   fi
 
-  case "$selection" in
+  case "${selection}" in
     [1-7]) #
            # Change delimiter to a comma character.
            #
@@ -1150,11 +1151,11 @@ function _initConfigData()
                       #
                       # Get the ConfigData and store it in XML format (otherwise we end up with a trailing 0a)
                       #
-                      /usr/libexec/PlistBuddy -c "${commandString}$index:ConfigData" $sourceFile -x > "/tmp/ConfigData-ALC${gKextID}.xml"
+                      /usr/libexec/PlistBuddy -c "${commandString}$index:ConfigData" $sourceFile -x > "${gSourceDirectory}/ConfigData-ALC${gKextID}.xml"
                       #
                       # Strip XML tags and remove the newline characters.
                       #
-                      gConfigData=$(awk '/<data>.*/,/<\/data>/' "/tmp/ConfigData-ALC${gKextID}.xml" | sed -e 's/<\/*data>//' | tr -d '\n')
+                      gConfigData=$(awk '/<data>.*/,/<\/data>/' "${gSourceDirectory}/ConfigData-ALC${gKextID}.xml" | sed -e 's/<\/*data>//' | tr -d '\n')
                       return 1
                   fi
               fi
@@ -1196,14 +1197,14 @@ function _initConfigData()
           #
           # Did we download and unzip the archive already?
           #
-          if [[ ! -e "/tmp/${gKextID}/Info-${plistID}.plist" && ! -e "/tmp/hdacd.plist" ]];
+          if [[ ! -e "${gSourceDirectory}/${gKextID}/Info-${plistID}.plist" && ! -e "${gSourceDirectory}/hdacd.plist" ]];
             then
             #
             # No. Download the archive from Toleda's Github repository :-)
             #
-            if [[ ! -e "/tmp/ALC${gKextID}.zip" ]]; then
+            if [[ ! -e "${gSourceDirectory}/ALC${gKextID}.zip" ]]; then
               _PRINT_ERROR "ConfigData NOT found!\nDownloading ${gDownloadLink} ...\n"
-              sudo curl -o "/tmp/ALC${gKextID}.zip" $gDownloadLink
+              sudo curl -o "${gSourceDirectory}/ALC${gKextID}.zip" $gDownloadLink
               _LOG_PRINT ""
               _DEBUG_PRINT "Download Done!\n"
             fi
@@ -1211,37 +1212,37 @@ function _initConfigData()
             # Unzip archive.
             #
             _LOG_PRINT "Unzipping "
-            unzip -u "/tmp/ALC${gKextID}.zip" -d "/tmp/"
+            unzip -u "${gSourceDirectory}/ALC${gKextID}.zip" -d "${gSourceDirectory}"
           fi
           #
           # Do we have a new style plist?
           #
-          if [[ -e "/tmp/${gKextID}/hdacd.plist" ]];
+          if [[ -e "${gSourceDirectory}/${gKextID}/hdacd.plist" ]];
             then
               #
               # Yes. Search for target CodecID, target LayoutID and ConfigData.
               #
-              _LOG_PRINT "Looking in: /tmp/${gKextID}/hdacd.plist for ConfigData"
-              __searchForConfigData "/tmp/${gKextID}/hdacd.plist" 1
+              _LOG_PRINT "Looking in: ${gSourceDirectory}/${gKextID}/hdacd.plist for ConfigData"
+              __searchForConfigData "${gSourceDirectory}/${gKextID}/hdacd.plist" 1
               #
               # Success?
               #
               if (($? == 1));
                 then
                   let stat=1
-                  gSourceDirectory="/tmp/${gKextID}"
+                  gSourceDirectory="${gSourceDirectory}/${gKextID}"
               fi
             else
               #
               # No new style. Check for old style plist in /tmp/892/ (example).
               #
-              if [[ ! -e "/tmp/${gKextID}/Info-${plistID}.plist" ]];
+              if [[ ! -e "${gSourceDirectory}/${gKextID}/Info-${plistID}.plist" ]];
                 then
                   _DEBUG_PRINT "${STYLE_BOLD}Warning:${STYLE_RESET} Info-${plistID}.plist not found!\n"
                   #
                   # No plist found. Create list with available plist files.
                   #
-                  plistNames=($(ls /tmp/${gKextID}/Info-??.plist | tr "\n" " "))
+                  plistNames=($(ls "${gSourceDirectory}/${gKextID}/Info-??.plist" | tr "\n" " "))
                   #
                   # Get number of plist files.
                   #
@@ -1262,7 +1263,7 @@ function _initConfigData()
 
                       _LOG_PRINT ""
                       read -p "Please choose the matching Info.plist (1/${index}) " selection
-                      case "$selection" in
+                      case "${selection}" in
                         [1-${index}])
                            _LOG_PRINT "\nLooking in: ${plistNames[${selection} - 1]} for ConfigData\n"
                            __searchForConfigData "${plistNames[${selection} - 1]}"
@@ -1274,14 +1275,14 @@ function _initConfigData()
                       esac
                   fi
                 else
-                  _LOG_PRINT "Looking in: /tmp/${gKextID}/Info-${plistID}.plist for ConfigData"
-                  __searchForConfigData "/tmp/${gKextID}/Info-${plistID}.plist"
+                  _LOG_PRINT "Looking in: ${gSourceDirectory}/${gKextID}/Info-${plistID}.plist for ConfigData"
+                  __searchForConfigData "${gSourceDirectory}/${gKextID}/Info-${plistID}.plist"
               fi
 
               if (($? == 1));
                 then
                   let stat=1
-                  gSourceDirectory="/tmp/${gKextID}"
+                  gSourceDirectory="${gSourceDirectory}/${gKextID}"
               fi
           fi
         else
@@ -1440,7 +1441,7 @@ function _getScriptArguments()
                           let gTargetALC=$1
                           _DEBUG_PRINT "Setting gTargetALC to     : ${gTargetALC}\n"
                         else
-                          _invalidArgumentError "-a $1"
+                          _invalidArgumentError "-a ${1}"
                       fi
                       ;;
 
@@ -1454,7 +1455,7 @@ function _getScriptArguments()
                           let gTargetLayoutID=$1
                           _DEBUG_PRINT "Setting gTargetLayoutID to: ${gTargetLayoutID}\n"
                         else
-                          _invalidArgumentError "-l $1"
+                          _invalidArgumentError "-l ${1}"
                       fi
                       ;;
 
@@ -1467,9 +1468,9 @@ function _getScriptArguments()
                         elif [[ "${1:0:8}" == "AppleHDA" ]];
                           then
                           _DEBUG_PRINT "Initialising bin-patch pattern for AppleHDA\n"
-                          _initBinPatchPattern "$1"
+                          _initBinPatchPattern "${1}"
                         else
-                          _invalidArgumentError "-b $1"
+                          _invalidArgumentError "-b ${1}"
                       fi
                       ;;
 
@@ -1480,15 +1481,15 @@ function _getScriptArguments()
                           #
                           # Make this our target directory.
                           #
-                          gTargetDirectory=$(echo "$1" | sed 's/\/$//')
+                          gTargetDirectory=$(echo "${1}" | sed 's/\/$//')
                           _DEBUG_PRINT "Setting gTargetDirectory to: ${gTargetDirectory}\n"
                         else
-                          _invalidArgumentError "-d $1"
+                          _invalidArgumentError "-d ${1}"
                       fi
                       ;;
                 esac
               else
-                _invalidArgumentError "$1"
+                _invalidArgumentError "${1}"
             fi
             shift;
           done;
@@ -1541,7 +1542,7 @@ function main()
   #
   # Make target directory structure.
   #
-  _LOG_PRINT "Creating ${gKextName}.kext in: $gTargetDirectory"
+  _LOG_PRINT "Creating ${gKextName}.kext in: ${gTargetDirectory}"
   mkdir -m 755 -p "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources"
 
   #
@@ -1792,7 +1793,7 @@ function main()
 
           read -p "Do you want to copy ${gKextName}.kext to: ${gExtensionsDirectory}? (y/n) " choice
           case "$choice" in
-            y|Y ) cp -r "${gTargetDirectory}/${gKextName}.kext" "${gExtensionsDirectory}"
+            y|Y ) cp -R "${gTargetDirectory}/${gKextName}.kext" "${gExtensionsDirectory}"
                   gTargetDirectory="${gExtensionsDirectory}"
 
                   if [[ $gProductVersion =~ "10.10" || $gIsCapitan ]];
@@ -1817,9 +1818,11 @@ function main()
       #
       _DEBUG_PRINT "Triggering a kernelcache refresh ...\n"
       touch "${gExtensionsDirectory}"
+      sudo kextcache -system-prelinked-kernel
+      sudo kextcache -system-caches
 
       read -p "Do you want to reboot now? (y/n) " choice2
-      case "$choice2" in
+      case "${choice2}" in
         y|Y ) reboot now
               ;;
       esac

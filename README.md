@@ -1,7 +1,11 @@
 ### NOTE:
 
 * Original ```AppleHDA8Series.sh``` README is [here](https://github.com/Piker-Alpha/AppleHDA8Series.sh)
-* Turn ON DEBUG=1 to read more log
+* Turn ON [ DEBUG=1 ] to read more log
+
+### USAGE:
+
+```./AppleHDA8Series.sh [halbd]```
 
 ### NEW:
 
