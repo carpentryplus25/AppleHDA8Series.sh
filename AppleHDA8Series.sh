@@ -1793,7 +1793,8 @@ function main()
 
           read -p "Do you want to copy ${gKextName}.kext to: ${gExtensionsDirectory}? (y/n) " choice
           case "$choice" in
-            y|Y ) cp -R "${gTargetDirectory}/${gKextName}.kext" "${gExtensionsDirectory}"
+            y|Y ) [[ -d "${gExtensionsDirectory}/${gKextName}.kext" ]] && rm -rf "${gExtensionsDirectory}/${gKextName}.kext"
+                  cp -R "${gTargetDirectory}/${gKextName}.kext" "${gExtensionsDirectory}"
                   gTargetDirectory="${gExtensionsDirectory}"
 
                   if [[ $gProductVersion =~ "10.10" || $gIsCapitan ]];
