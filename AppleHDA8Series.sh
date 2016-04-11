@@ -1551,17 +1551,25 @@ function main()
   if [[ -e "${gSourceDirectory}/Platforms.xml.zlib" ]];
     then
       cp "${gSourceDirectory}/Platforms.xml.zlib" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
+    elif [[ -e "${gSourceDirectory}/Platforms.xml" ]];
+      then
+        #cp "${gSourceDirectory}/Platforms.xml" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
+        perl -MCompress::Zlib -e "undef $/; print compress(<>)"  < "${gSourceDirectory}/Platforms.xml" > "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/Platforms.xml.zlib"
     else
-      cp "${gSourceDirectory}/Platforms.xml" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
+      _DEBUG_PRINT "No Platforms.xml(.zlib) ..."
   fi
   #
   # Copy the layout file from the source directory.
   #
   if [[ -e "${gSourceDirectory}/layout${gLayoutID}.xml.zlib" ]];
     then
-       cp "${gSourceDirectory}/layout${gLayoutID}.xml.zlib" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
-     else
-       cp "${gSourceDirectory}/layout${gLayoutID}.xml" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
+      cp "${gSourceDirectory}/layout${gLayoutID}.xml.zlib" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
+    elif [[ -e "${gSourceDirectory}/layout${gLayoutID}.xml" ]];
+      then
+        #cp "${gSourceDirectory}/layout${gLayoutID}.xml" "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/"
+        perl -MCompress::Zlib -e "undef $/; print compress(<>)"  < "${gSourceDirectory}/layout${gLayoutID}.xml" > "${gTargetDirectory}/${gKextName}.kext/Contents/PlugIns/AppleHDALoader.kext/Contents/Resources/layout${gLayoutID}.xml.zlib"
+    else
+      _DEBUG_PRINT "No layout${gLayoutID}.xml(.zlib) ..."
   fi
 
   #
