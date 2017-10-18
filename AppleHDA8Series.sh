@@ -1425,7 +1425,7 @@ function _getScriptArguments()
             #
             # Is this a valid script argument flag?
             #
-            if [[ "${1}" =~ ^[-albdALBD]+$ ]];
+            if [[ "${1}" =~ ^[-abdltABDLT]+$ ]];
               then
                 #
                 # Yes. Figure out what flag it is.
